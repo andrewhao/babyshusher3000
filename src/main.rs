@@ -1,3 +1,4 @@
+use include_dir::{include_dir, Dir};
 use rand::prelude::*;
 use rand_distr::Normal;
 use soloud::*;
@@ -7,7 +8,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sl = Soloud::default()?;
     let mut wav = audio::Wav::default();
 
-    wav.load(&std::path::Path::new("shh.mp3"))?;
+    static PROJECT_DIR: Dir<'_> = include_dir!("audio");
+    let shh_mp3 = PROJECT_DIR.get_file("shh.mp3").unwrap();
+
+    // wav.load(&std::path::Path::new("shh.mp3"))?;
+    wav.load_mem(&shh_mp3.contents())?;
 
     loop {
         println!("Shushing...");
