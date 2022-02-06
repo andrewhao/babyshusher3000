@@ -14,6 +14,14 @@ struct Args {
     /// Jitter factor to add to delays (as standard deviations on normal distribution)
     #[clap(short, long, default_value_t = 200)]
     jitter: u64,
+
+    /// Whether to play effect once, without looping.
+    #[clap(short, long, parse(from_flag))]
+    one_shot: bool,
+
+    /// Print verbose debug output to stdout.
+    #[clap(short, long, parse(from_flag))]
+    verbose: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,7 +36,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     wav.load_mem(&shh_mp3.contents())?;
 
     loop {
-        println!("Shushing...");
+        if args.verbose {
+            println!("Shushing...");
+        }
+
         // let jitter_ms = thread_rng().gen_range(1..JITTER_MAX);
         let poi = Normal::new(args.delay_ms as f64, args.jitter as f64).unwrap();
         let jitter_ms = poi.sample(&mut thread_rng()) as u64;
@@ -37,7 +48,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         while sl.voice_count() > 0 {
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
-        println!("Jitter: {}", jitter_ms);
+
+        if args.one_shot {
+            break;
+        }
+
+        if args.verbose {
+            println!("Jitter: {}", jitter_ms);
+        }
         std::thread::sleep(std::time::Duration::from_millis(jitter_ms));
     }
+    Ok(())
 }
